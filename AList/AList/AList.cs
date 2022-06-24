@@ -27,11 +27,12 @@ namespace AList
         
         public void AddAt(int pos, T element)
         {
+            if (pos < 0 || pos >= Length)
+                throw new IndexOutOfRangeException($"Index: {pos}, Size: {Length}");
+
             if (freePos == array.Length)
-            {
                 Expand();
-            }
-            
+
             freePos++;
             T[] newArray = new T[array.Length];
             newArray[pos] = element;
@@ -41,6 +42,39 @@ namespace AList
 
             for (int i = pos; i < Length; i++)
                 newArray[i + 1] = array[i];
+
+            array = newArray;
+        }
+        
+        public void Remove(T element)
+        {
+            if (freePos == 0)
+                throw new InvalidOperationException("Trying to remove an element from an empty alist");
+
+            int index = Array.IndexOf(array, element, 0, Length);
+
+            if (index < 0)
+                return;
+            
+            RemoveAt(index);
+            
+        }
+        
+        public void RemoveAt(int pos)
+        {
+            if (freePos < pos)
+            {
+                throw new InvalidOperationException("Trying to remove an element on unknown index");
+            }
+            
+            freePos--;
+            T[] newArray = new T[array.Length];
+
+            for (int i = 0; i < pos; i++)
+                newArray[i] = array[i];
+
+            for (int i = pos; i < Length; i++)
+                newArray[i] = array[i+1];
 
             array = newArray;
         }

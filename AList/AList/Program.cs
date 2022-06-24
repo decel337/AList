@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AList
 {
@@ -7,6 +8,8 @@ namespace AList
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
+            List<int> list = new List<int>() {1, 2, 3, 4};
+            list.Remove(10);
         }
     }
 }
