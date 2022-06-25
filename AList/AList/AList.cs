@@ -1,28 +1,44 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace AList
 {
-    public class AList<T>
+    public class AList<T> where T: IComparable
     {
-        private T[] array;
-        private const int defaultSize = 32;
-        private int freePos = 0;
-        public int Length { get => freePos; }
+        private T[] _array;
+        private T[] _arrayMax;
+        private const int DefaultSize = 32;
+        private int _freePos = 0;
+        public int Length { get => _freePos; }
+        private T Max;
         
         public AList()
         {
-            array = new T[defaultSize];
+            _array = new T[DefaultSize];
+            /*if (_array[0] is int || _array[0] is char || _array[0] is Enum)
+            {
+                throw new Exception();
+            }*/
         }
         
         public void Add(T element)
         {
-            if (freePos == array.Length)
+            if (_freePos == _array.Length)
             {
                 Expand();
             }
-            array[freePos] = element;
-            freePos++;
+            
+            if (element.CompareTo(Max) > 0)
+            {
+                Max = element;
+            }
+            
+            _array[_freePos] = element;
+            _arrayMax[_freePos] = Max;
+
+            _freePos++;
         }
         
         public void AddAt(int pos, T element)
@@ -30,28 +46,28 @@ namespace AList
             if (pos < 0 || pos >= Length)
                 throw new IndexOutOfRangeException($"Index: {pos}, Size: {Length}");
 
-            if (freePos == array.Length)
+            if (_freePos == _array.Length)
                 Expand();
 
-            freePos++;
-            T[] newArray = new T[array.Length];
+            _freePos++;
+            T[] newArray = new T[_array.Length];
             newArray[pos] = element;
             
             for (int i = 0; i < pos; i++)
-                newArray[i] = array[i];
+                newArray[i] = _array[i];
 
             for (int i = pos; i < Length; i++)
-                newArray[i + 1] = array[i];
+                newArray[i + 1] = _array[i];
 
-            array = newArray;
+            _array = newArray;
         }
         
         public void Remove(T element)
         {
-            if (freePos == 0)
+            if (_freePos == 0)
                 throw new InvalidOperationException("Trying to remove an element from an empty alist");
 
-            int index = Array.IndexOf(array, element, 0, Length);
+            int index = Array.IndexOf(_array, element, 0, Length);
 
             if (index < 0)
                 return;
@@ -62,30 +78,35 @@ namespace AList
         
         public void RemoveAt(int pos)
         {
-            if (freePos < pos)
+            if (_freePos < pos)
             {
                 throw new InvalidOperationException("Trying to remove an element on unknown index");
             }
             
-            freePos--;
-            T[] newArray = new T[array.Length];
+            _freePos--;
+            T[] newArray = new T[_array.Length];
 
             for (int i = 0; i < pos; i++)
-                newArray[i] = array[i];
+                newArray[i] = _array[i];
 
             for (int i = pos; i < Length; i++)
-                newArray[i] = array[i+1];
+                newArray[i] = _array[i+1];
 
-            array = newArray;
+            _array = newArray;
         }
-        
+
+        public T SearchMax()
+        {
+            return Max;
+        }
+
         private void Expand()
         {
-            T[] newArray = new T[array.Length * 2];
-            Array.Copy(array, newArray, array.Length);
-            array = newArray;
+            T[] newArray = new T[_array.Length * 2];
+            Array.Copy(_array, newArray, _array.Length);
+            _array = newArray;
         }
-        
+
         /*IEnumerator IEnumerable.GetEnumerator()
         {
             return (IEnumerator) GetEnumerator();

@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+// See https://aka.ms/new-console-template for more information
 
-namespace AList
+using System;
+using System.Numerics;
+
+
+T Add<T>(T lhs, T rhs)
+    where T : INumber<T>
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("Hello World!");
-            List<int> list = new List<int>() {1, 2, 3, 4};
-            list.Remove(10);
-        }
-    }
+    return lhs + rhs;
 }
+
+decimal d = 1*10;
+
+Console.WriteLine((int)d is int);
