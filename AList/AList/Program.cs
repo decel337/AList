@@ -1,10 +1,6 @@
 // See https://aka.ms/new-console-template for more information
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using System.Text.Json;
 using AList;
 
@@ -22,5 +18,3 @@ Console.WriteLine(jsonstring);
 Console.WriteLine(new String('-', 15));
 var asSameLst = JsonSerializer.Deserialize<InterestingList<double>>(jsonstring);
 Console.WriteLine(asSameLst.ToString());
-
-//Console.WriteLine(lst.Single());

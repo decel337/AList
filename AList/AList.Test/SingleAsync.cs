@@ -31,12 +31,16 @@ namespace AList.Test
         public void SingleAsyncInList()
         {
             //arrange
-            var list = new InterestingList<double>() {10.3, 2.5, -2.8};
-            double elementForSearch = 2.5;
+            var lst = new InterestingList<double>();
+            for (int i = -1000; i < 10000; i+=10)
+            {
+                lst.Add(i);
+            }
+            double elementForSearch = 0;
             //- act
-            int position = list.SingleAsync(2.5);
+            int position = lst.SingleAsync(elementForSearch);
             //- assert
-            Assert.AreEqual(list[position], elementForSearch);
+            Assert.AreEqual(lst[position], elementForSearch);
         }
     }
 }
