@@ -1,9 +1,17 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace AList
 {
+    [JsonConverter(typeof(JsonConverterFactoryForListOfT))]
     public class InterestingList<T> where T: INumber<T>
 
     {
@@ -133,6 +141,63 @@ namespace AList
                 ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
         } 
     }
+    
+    public int SingleAsync(T elem)
+    {
+        var chunks = ToChunks(100).ToArray();
+
+        if (chunks.Count() == 0)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        int index = -1;
+
+        Parallel.For(0, chunks.Length, (i, _) =>
+        {
+            int indexPredict = SearchNumber(chunks[i], elem);
+
+            if (indexPredict != -1 && index != -1)
+                throw new Exception();
+
+            if (indexPredict != -1 && i != 0)
+                index = indexPredict + i * chunks[i - 1].Count();
+            else if(indexPredict != -1)
+                index = indexPredict;
+        });
+        
+        return index;
+    }
+
+    private int SearchNumber(List<T> chunk, T searchElem)
+    {
+        Console.WriteLine("After");
+
+        if (chunk.Count(x => x == searchElem) > 1)
+        {
+            throw new ArgumentException();
+        }
+        
+        Console.WriteLine("Before");
+        return chunk.IndexOf(searchElem);
+    }
+    
+
+    public IEnumerable<List<T>> ToChunks(int chunkSize)
+    {
+        List<T> chunk = new List<T>(chunkSize);
+        for (int i = 0; i < Length; i++)
+        {
+            chunk.Add(_array[i]);
+            if (chunk.Count == chunkSize) {
+                yield return chunk;
+                chunk = new List<T>(chunkSize);
+            }
+        }
+
+        if (chunk.Any())
+            yield return chunk;
+    }
     }
 
     public class InterestingListEnum<T> : IEnumerator
@@ -161,7 +226,7 @@ namespace AList
 
         public T Current
         {
-get
+            get
             {
                 if (_position != -1 && _position < _length)
                     return _array[_position];
@@ -169,6 +234,81 @@ get
                 throw new ArgumentOutOfRangeException
                     ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
             }
+        }
+    }
+
+    public class JsonConverterFactoryForListOfT : JsonConverterFactory
+    {
+        public override bool CanConvert(Type typeToConvert)
+            => typeToConvert.IsGenericType
+            && typeToConvert.GetGenericTypeDefinition() == typeof(InterestingList<>);
+
+        public override JsonConverter CreateConverter(
+            Type typeToConvert, JsonSerializerOptions options)
+        {
+            Debug.Assert(typeToConvert.IsGenericType &&
+                typeToConvert.GetGenericTypeDefinition() == typeof(InterestingList<>));
+
+            Type elementType = typeToConvert.GetGenericArguments()[0];
+
+            JsonConverter converter = (JsonConverter)Activator.CreateInstance(
+                typeof(JsonConverterForListOfT<>)
+                    .MakeGenericType(new Type[] { elementType }),
+                BindingFlags.Instance | BindingFlags.Public,
+                binder: null,
+                args: null,
+                culture: null)!;
+
+            return converter;
+        }
+    }
+
+    public class JsonConverterForListOfT<T> : JsonConverter<InterestingList<T>> where T: INumber<T>
+    {
+        public override InterestingList<T> Read(
+            ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType != JsonTokenType.StartArray)
+            {
+                throw new JsonException();
+            }
+            reader.Read();
+
+            InterestingList<T> elements = new();
+            do
+            {
+                reader.Read();
+                while (reader.TokenType != JsonTokenType.EndArray)
+                {
+                    elements.Add(JsonSerializer.Deserialize<T>(ref reader, options)!);
+
+                    reader.Read();
+                }
+
+                reader.Read();
+            } while (reader.TokenType == JsonTokenType.StartArray);
+
+            return elements;
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer, InterestingList<T> list, JsonSerializerOptions options)
+        {
+            writer.WriteStartArray();
+
+            var chunks = list.ToChunks(100);
+
+            foreach (var chunk in chunks)
+            {
+                writer.WriteStartArray();
+                foreach (var element in chunk)
+                {
+                    JsonSerializer.Serialize(writer, element, options);
+                }
+                writer.WriteEndArray();
+            }
+
+            writer.WriteEndArray();
         }
     }
 }

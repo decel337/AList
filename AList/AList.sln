@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AList", "AList\AList.csproj", "{C29A8ADC-14A8-4B88-860B-D878919557E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AList.Test", "AList.Test\AList.Test.csproj", "{FB209B90-E325-4D6E-B6D2-71B51AD6E105}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{C29A8ADC-14A8-4B88-860B-D878919557E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C29A8ADC-14A8-4B88-860B-D878919557E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C29A8ADC-14A8-4B88-860B-D878919557E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB209B90-E325-4D6E-B6D2-71B51AD6E105}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB209B90-E325-4D6E-B6D2-71B51AD6E105}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB209B90-E325-4D6E-B6D2-71B51AD6E105}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB209B90-E325-4D6E-B6D2-71B51AD6E105}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
