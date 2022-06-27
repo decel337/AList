@@ -9,22 +9,18 @@ using System.Text.Json;
 using AList;
 
 
-InterestingList<int> lst = new();
-lst.Add(5);
-lst.Add(10);
-lst.Add(20);
-lst.Add(30);
-for (int i = 40; i < 10000; i+=10)
+Console.WriteLine("Hello World");
+
+var lst = new InterestingList<double>();
+for (int i = -1000; i < 10000; i+=10)
 {
     lst.Add(i);
 }
-Console.WriteLine(lst._array.ToList().IndexOf(1200));
-Console.WriteLine(lst.SingleAsync(1200));
 
-string jsonstring = System.Text.Json.JsonSerializer.Serialize(lst);
+string jsonstring = JsonSerializer.Serialize(lst);
 Console.WriteLine(jsonstring);
-
-var hm = JsonSerializer.Deserialize<InterestingList<int>>(jsonstring);
-Console.WriteLine(hm.Length);
+Console.WriteLine(new String('-', 15));
+var asSameLst = JsonSerializer.Deserialize<InterestingList<double>>(jsonstring);
+Console.WriteLine(asSameLst.ToString());
 
 //Console.WriteLine(lst.Single());

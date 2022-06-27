@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 namespace AList
 {
     [JsonConverter(typeof(JsonConverterFactoryForListOfT))]
-    public class InterestingList<T> where T: INumber<T>
+    public class InterestingList<T> : IEnumerable where T: INumber<T>
 
     {
-    public T[] _array;
+    private T[] _array;
     public IEnumerator GetEnumerator() => new InterestingListEnum<T>(_array, Length);
     private const int DefaultSize = 32;
     private int _freePos = 0;
@@ -42,7 +42,8 @@ namespace AList
     public void AddAt(int pos, T element)
     {
         if (pos < 0 || pos >= Length)
-            throw new IndexOutOfRangeException($"Index: {pos}, Size: {Length}");
+            throw new IndexOutOfRangeException("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')" +
+                                               $"Index: {pos}, Size: {Length}");
 
         if (_freePos == _array.Length)
             Expand();
@@ -77,8 +78,8 @@ namespace AList
 
     public void RemoveAt(int pos)
     {
-        if (_freePos <= pos)
-            throw new InvalidOperationException("Trying to remove an element on unknown index");
+        if (pos < 0 || pos >= Length)
+            throw new IndexOutOfRangeException($"Trying to remove an element on unknown index. Index: {pos}, Size: {Length}");
 
         _freePos--;
         T[] newArray = new T[_array.Length];
@@ -129,16 +130,18 @@ namespace AList
             if (index >= 0 && index < Length)
                 return _array[index];
 
-            throw new ArgumentOutOfRangeException
-                ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
+            throw new IndexOutOfRangeException
+                ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')" +
+                 $"Index: {index}, Size: {Length}");
         }
         set
         { 
             if (index >= 0 && index < Length)
                 _array[index] = value;
             
-            throw new ArgumentOutOfRangeException
-                ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
+            throw new IndexOutOfRangeException
+                ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')" +
+                 $"Index: {index}, Size: {Length}");
         } 
     }
     
@@ -146,9 +149,9 @@ namespace AList
     {
         var chunks = ToChunks(100).ToArray();
 
-        if (chunks.Count() == 0)
+        if (!chunks.Any())
         {
-            throw new ArgumentOutOfRangeException();
+            throw new InvalidOperationException("Sequence contains no elements");
         }
 
         int index = -1;
@@ -158,27 +161,28 @@ namespace AList
             int indexPredict = SearchNumber(chunks[i], elem);
 
             if (indexPredict != -1 && index != -1)
-                throw new Exception();
+                throw new InvalidOperationException("Sequence contains more than one element");
 
             if (indexPredict != -1 && i != 0)
                 index = indexPredict + i * chunks[i - 1].Count();
             else if(indexPredict != -1)
                 index = indexPredict;
         });
+
+        if (index == -1)
+        {
+            throw new InvalidOperationException("Sequence don't contain any element");
+        }
         
         return index;
     }
 
     private int SearchNumber(List<T> chunk, T searchElem)
     {
-        Console.WriteLine("After");
-
         if (chunk.Count(x => x == searchElem) > 1)
         {
-            throw new ArgumentException();
+            throw new InvalidOperationException("Sequence contains more than one element");
         }
-        
-        Console.WriteLine("Before");
         return chunk.IndexOf(searchElem);
     }
     
@@ -197,6 +201,17 @@ namespace AList
 
         if (chunk.Any())
             yield return chunk;
+    }
+
+    public override string ToString()
+    {
+        string output = "";
+        for (int i = 0; i < Length; i++)
+        {
+            output += _array[i] + " ";
+        }
+
+        return output;
     }
     }
 
@@ -231,7 +246,7 @@ namespace AList
                 if (_position != -1 && _position < _length)
                     return _array[_position];
                 
-                throw new ArgumentOutOfRangeException
+                throw new IndexOutOfRangeException
                     ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
             }
         }
