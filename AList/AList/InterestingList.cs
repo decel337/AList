@@ -261,9 +261,6 @@ namespace AList
         public override JsonConverter CreateConverter(
             Type typeToConvert, JsonSerializerOptions options)
         {
-            Debug.Assert(typeToConvert.IsGenericType &&
-                typeToConvert.GetGenericTypeDefinition() == typeof(InterestingList<>));
-
             Type elementType = typeToConvert.GetGenericArguments()[0];
 
             JsonConverter converter = (JsonConverter)Activator.CreateInstance(
