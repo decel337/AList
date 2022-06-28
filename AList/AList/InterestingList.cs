@@ -1,11 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -177,6 +174,30 @@ namespace AList
         return index;
     }
 
+    public int SingleAsyncWithTask(T elem)
+    {
+        const int chunkSize = 100;
+        var chunks = ToChunks(chunkSize).ToArray();
+
+        if (!chunks.Any())
+        {
+            throw new InvalidOperationException("Sequence contains no elements");
+        }
+
+        List<int> indexes = new();
+        
+        var tasks = chunks.Select((chunk, index)=>SearchNumberAsync(chunk, elem, indexes, index, chunkSize));
+
+        Task.WhenAll(tasks).Wait();
+
+        if (!indexes.Any())
+        {
+            throw new InvalidOperationException("Sequence don't contain any element");
+        }
+
+        return indexes.Single();
+    }
+
     private int SearchNumber(List<T> chunk, T searchElem)
     {
         if (chunk.Count(x => x == searchElem) > 1)
@@ -184,6 +205,22 @@ namespace AList
             throw new InvalidOperationException("Sequence contains more than one element");
         }
         return chunk.IndexOf(searchElem);
+    }
+    
+    private async Task SearchNumberAsync(List<T> chunk, T searchElem, List<int> indexes, int numberchunk, int chunksize)
+    {
+        if (chunk.Count(x => x == searchElem) > 1)
+        {
+            throw new InvalidOperationException("Sequence contains more than one element");
+        }
+
+        int indexPredict = await Task.Run(() => chunk.IndexOf(searchElem));
+        
+        if (indexPredict != -1 && indexes.Any())
+            throw new InvalidOperationException("Sequence contains more than one element");
+
+        if (indexPredict != -1)
+            indexes.Add(indexPredict + numberchunk * chunksize);
     }
     
 
@@ -213,114 +250,5 @@ namespace AList
 
         return output;
     }
-    }
-
-    public class InterestingListEnum<T> : IEnumerator
-    {
-        private readonly T[] _array;
-        private readonly int _length;
-        
-        private int _position = -1;
-
-        public InterestingListEnum(T[] array, int length)
-        {
-            _array = array;
-            _length = length;
-        }
-
-        public bool MoveNext()
-        {
-            _position++;
-            return (_position < _length);
-        }
-
-        public void Reset() => _position = -1;
-
-
-        object IEnumerator.Current { get => Current; }
-
-        public T Current
-        {
-            get
-            {
-                if (_position != -1 && _position < _length)
-                    return _array[_position];
-                
-                throw new IndexOutOfRangeException
-                    ("Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')");
-            }
-        }
-    }
-
-    public class JsonConverterFactoryForListOfT : JsonConverterFactory
-    {
-        public override bool CanConvert(Type typeToConvert)
-            => typeToConvert.IsGenericType
-            && typeToConvert.GetGenericTypeDefinition() == typeof(InterestingList<>);
-
-        public override JsonConverter CreateConverter(
-            Type typeToConvert, JsonSerializerOptions options)
-        {
-            Type elementType = typeToConvert.GetGenericArguments()[0];
-
-            JsonConverter converter = (JsonConverter)Activator.CreateInstance(
-                typeof(JsonConverterForListOfT<>)
-                    .MakeGenericType(new Type[] { elementType }),
-                BindingFlags.Instance | BindingFlags.Public,
-                binder: null,
-                args: null,
-                culture: null)!;
-
-            return converter;
-        }
-    }
-
-    public class JsonConverterForListOfT<T> : JsonConverter<InterestingList<T>> where T: INumber<T>
-    {
-        public override InterestingList<T> Read(
-            ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            if (reader.TokenType != JsonTokenType.StartArray)
-            {
-                throw new JsonException();
-            }
-            reader.Read();
-
-            InterestingList<T> elements = new();
-            do
-            {
-                reader.Read();
-                while (reader.TokenType != JsonTokenType.EndArray)
-                {
-                    elements.Add(JsonSerializer.Deserialize<T>(ref reader, options)!);
-
-                    reader.Read();
-                }
-
-                reader.Read();
-            } while (reader.TokenType == JsonTokenType.StartArray);
-
-            return elements;
-        }
-
-        public override void Write(
-            Utf8JsonWriter writer, InterestingList<T> list, JsonSerializerOptions options)
-        {
-            writer.WriteStartArray();
-
-            var chunks = list.ToChunks(100);
-
-            foreach (var chunk in chunks)
-            {
-                writer.WriteStartArray();
-                foreach (var element in chunk)
-                {
-                    JsonSerializer.Serialize(writer, element, options);
-                }
-                writer.WriteEndArray();
-            }
-
-            writer.WriteEndArray();
-        }
     }
 }
