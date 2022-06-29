@@ -215,6 +215,35 @@ namespace AList
         
         return indexes.Single();
     }
+    
+    public async Task<int> SingleAsyncWithTaskAwait(T elem)
+    {
+        const int chunkSize = 100;
+        var chunks = ToChunks(chunkSize).ToArray();
+
+        if (!chunks.Any())
+        {
+            throw new InvalidOperationException("Sequence contains no elements");
+        }
+
+        List<int> indexes = new();
+        
+        var tasks = chunks.Select((chunk, index)=>SearchNumberAsync(chunk, elem, indexes, index, chunkSize));
+
+        await Task.WhenAll(tasks);
+
+        if (!indexes.Any())
+        {
+            throw new InvalidOperationException("Sequence don't contain any element");
+        }
+
+        foreach (var index in indexes)
+        {
+            Console.WriteLine(index);
+        }
+        
+        return indexes.Single();
+    }
 
     private int SearchNumber(List<T> chunk, T searchElem)
     {

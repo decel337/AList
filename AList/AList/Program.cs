@@ -29,3 +29,8 @@ var t = new CollectionPretifier(lst);
 var p = new CollectionPretifier(emptylist);
 Console.WriteLine(t.Str);
 Console.WriteLine(p.Str);
+
+
+//SingleAsync .wait() vs await
+Console.WriteLine(lst.SingleAsyncWithTask(0));
+Console.WriteLine(lst.SingleAsyncWithTaskAwait(0));
