@@ -5,24 +5,40 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using AList;
 
 namespace AList
 {
     [JsonConverter(typeof(JsonConverterFactoryForListOfT))]
     public class InterestingList<T> : IEnumerable where T: INumber<T>
-
     {
     private T[] _array;
     public IEnumerator GetEnumerator() => new InterestingListEnum<T>(_array, Length);
     private const int DefaultSize = 32;
-    private int _freePos = 0;
     private T _max;
-
+    private int _freePos = 0;
+    [Format("max")]
+    public T Max {
+        get
+        {
+            if (_freePos == 0)
+                throw new InvalidOperationException("Sequence contains no elements");
+            return _max;
+        }
+        set
+        {
+            _max = value;
+        }}
+    [Format("simple")]
+    public int simple { get; set; }
+    
+    [Format("length")]
     public int Length { get => _freePos; }
 
     public InterestingList()
     {
         _array = new T[DefaultSize];
+        simple = 100;
     }
 
     public void Add(T element)
@@ -30,6 +46,11 @@ namespace AList
         if (_freePos == _array.Length)
             Expand();
 
+        if (_freePos == 0)
+        {
+            _max = element;
+        }
+        
         _max = MaxValue(element, _max);
 
         _array[_freePos] = element;
@@ -112,14 +133,6 @@ namespace AList
     private T MinValue(T element1, T element2) => element1 < element2 ? element1 : element2;
     private T MaxValue(T element1, T element2) => element1 > element2 ? element1 : element2;
 
-    public T Max()
-    {
-        if (_freePos == 0)
-            throw new InvalidOperationException("Sequence contains no elements");
-
-        return _max;
-    }
-    
     public T this[int index]
     {
         get
@@ -141,7 +154,7 @@ namespace AList
                  $"Index: {index}, Size: {Length}");
         } 
     }
-    
+
     public int SingleAsync(T elem)
     {
         var chunks = ToChunks(100).ToArray();
@@ -195,6 +208,11 @@ namespace AList
             throw new InvalidOperationException("Sequence don't contain any element");
         }
 
+        foreach (var index in indexes)
+        {
+            Console.WriteLine(index);
+        }
+        
         return indexes.Single();
     }
 
